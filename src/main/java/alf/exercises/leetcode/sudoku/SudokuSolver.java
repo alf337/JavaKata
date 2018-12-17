@@ -10,39 +10,29 @@ public class SudokuSolver {
 
         Board board = Board.of(boardArray);
         board.print("Begin");
-        solve(board);
-        board.print("Finished");
+        int attempts = solve(board);
+        board.print("Finished, attempts = " + attempts);
 
-        for (int i = 1; i < 10; i++) {
-            List<Cell> row = board.getRow(i);
-            for (Cell c : row) {
-                if (!c.val.isPresent()) {
-                    System.out.print(c);
-                }
-            }
-            System.out.println();
-            System.out.println();
-        }
-        return null;
+        return board.asArray();
     }
 
-    protected void solve(Board board) {
+    protected int solve(Board board) {
         int attempts = 0;
-        while (attempts < 2 && !board.isComplete()) {
+        while (attempts < 10 && !board.isComplete()) {
 
             evalAllRows(board);
             evalAllColumns(board);
             evalAllGrids(board);
             attempts++;
-            board.print("after attempt: " + attempts);
+            System.out.println("after attempt: " + attempts + " remaining:" + board.remaining());
         }
+        return attempts;
     }
 
     protected void evalAllRows(Board board) {
         for (int r = 1; r < 10; r++) {
             evalRow(board, r);
         }
-//        board.print("after rows evaluated");
     }
 
     protected void evalRow(Board board, int r) {
@@ -64,14 +54,13 @@ public class SudokuSolver {
         }
 
         evalMaybe(row, board);
-        if (!board.isValid()) throw new RuntimeException("board invalid after eval row: " + r);
+//        if (!board.isValid()) throw new RuntimeException("board invalid after eval row: " + r);
     }
 
     protected void evalAllColumns(Board board) {
         for (int c = 1; c < 10; c++) {
             evalColumn(board, c);
         }
-//        board.print("after columns evaluated");
     }
 
     protected void evalColumn(Board board, int c) {
@@ -93,14 +82,13 @@ public class SudokuSolver {
         }
 
         evalMaybe(column, board);
-        if (!board.isValid()) throw new RuntimeException("board invalid after eval column: " + c);
+//        if (!board.isValid()) throw new RuntimeException("board invalid after eval column: " + c);
     }
 
     protected void evalAllGrids(Board board) {
         for (int g = 1; g < 10; g++) {
             evalGrid(board, g);
         }
-//        board.print("after grids evaluated");
     }
 
     protected void evalGrid(Board board, int g) {
@@ -122,7 +110,7 @@ public class SudokuSolver {
         }
 
         evalMaybe(grid, board);
-        if (!board.isValid()) throw new RuntimeException("board invalid after eval grid: " + g);
+//        if (!board.isValid()) throw new RuntimeException("board invalid after eval grid: " + g);
     }
 
     private boolean containsValue(List<Cell> cellList, Character value) {
