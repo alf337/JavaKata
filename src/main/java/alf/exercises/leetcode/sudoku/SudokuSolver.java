@@ -28,9 +28,12 @@ public class SudokuSolver {
             prevRemaining = board.remaining();
             attempts++;
 
-            evalAllRows(board);
-            evalAllColumns(board);
-            evalAllGrids(board);
+            computeMaybeAllRows(board);
+            computeMaybeAllColumns(board);
+            computeMaybeAllGrids(board);
+
+            processAllMaybe(board);
+
 //            evalAllExclusivePairs(board);
 //            evalAllHiddenPairs(board);
 
@@ -39,13 +42,13 @@ public class SudokuSolver {
         return attempts;
     }
 
-    protected void evalAllRows(Board board) {
+    protected void computeMaybeAllRows(Board board) {
         for (int r = 1; r < 10; r++) {
-            evalRow(board, r);
+            computeMaybeRow(board, r);
         }
     }
 
-    protected void evalRow(Board board, int r) {
+    protected void computeMaybeRow(Board board, int r) {
 
         List<Cell> row = board.getRow(r);
         Set<Character> missingForRow = board.getMissingForRow(r);
@@ -62,17 +65,15 @@ public class SudokuSolver {
                 }
             }
         }
-
-        evalMaybe(row, board);
     }
 
-    protected void evalAllColumns(Board board) {
+    protected void computeMaybeAllColumns(Board board) {
         for (int c = 1; c < 10; c++) {
-            evalColumn(board, c);
+            computeMaybeColumn(board, c);
         }
     }
 
-    protected void evalColumn(Board board, int c) {
+    protected void computeMaybeColumn(Board board, int c) {
 
         List<Cell> column = board.getColumn(c);
         Set<Character> missingForCol = board.getMissingForColumn(c);
@@ -89,17 +90,15 @@ public class SudokuSolver {
                 }
             }
         }
-
-        evalMaybe(column, board);
     }
 
-    protected void evalAllGrids(Board board) {
+    protected void computeMaybeAllGrids(Board board) {
         for (int g = 1; g < 10; g++) {
-            evalGrid(board, g);
+            computeMaybeGrid(board, g);
         }
     }
 
-    protected void evalGrid(Board board, int g) {
+    protected void computeMaybeGrid(Board board, int g) {
 
         List<Cell> grid = board.getGrid(g);
         Set<Character> missingForGrid = board.getMissingForGrid(g);
@@ -116,27 +115,66 @@ public class SudokuSolver {
                 }
             }
         }
-
-        evalMaybe(grid, board);
     }
 
-    private void evalMaybe(List<Cell> cellList, Board board) {
-        for (Cell cell : cellList) {
-            if (!cell.val.isPresent()) {
+    private void processAllMaybe(Board board) {
+        processSingletons(board);
+        board.isValid();
 
-                List<Character> copyOfMaybe = new ArrayList<>(cell.maybe);
-                for (Character maybeChar : copyOfMaybe) {
+        for (int row = 1; row < 10; row++) {
+            processMaybeForGroup(board.getRow(row), board);
+            board.isValid();
+        }
+        for (int col = 1; col < 10; col++) {
+            processMaybeForGroup(board.getColumn(col), board);
+            board.isValid();
+        }
+        for (int g = 1; g < 10; g++) {
+            processMaybeForGroup(board.getGrid(g), board);
+            board.isValid();
+        }
+    }
 
-                    if (!isFoundInOtherMaybe(cellList, cell, maybeChar)) {
-                        cell.setVal(maybeChar);
+    private void processSingletons(Board board) {
+        boolean changeOccurred;
+        do {
+            changeOccurred = false;
+            for (Cell cell : board.getAllCells()) {
+                if (cell.val.isPresent()) {
+                    if (!cell.maybe.isEmpty()) throw new RuntimeException("??");
+                } else {
+                    if (cell.maybe.size() == 1) {
+                        Character maybeVal = cell.maybe.first();
+                        changeOccurred = true;
+                        cell.setVal(maybeVal);
                         cell.maybe.clear();
-
-                        // remove maybe val from col, row, and grid
-                        removeMaybeValFromNeighbors(maybeChar, cell, board);
+                        removeMaybeValFromNeighbors(maybeVal, cell, board);
                     }
                 }
             }
-        }
+        } while (changeOccurred);
+    }
+
+    private void processMaybeForGroup(List<Cell> cellList, Board board) {
+        boolean changeOccured;
+        do {
+            changeOccured = false;
+            for (Cell cell : cellList) {
+                if (!cell.val.isPresent()) {
+
+                    List<Character> copyOfMaybe = new ArrayList<>(cell.maybe);
+                    for (Character maybeChar : copyOfMaybe) {
+
+                        if (!isFoundInOtherMaybe(cellList, cell, maybeChar)) {
+                            changeOccured = true;
+                            cell.setVal(maybeChar);
+                            cell.maybe.clear();
+                            removeMaybeValFromNeighbors(maybeChar, cell, board);
+                        }
+                    }
+                }
+            }
+        } while (changeOccured);
     }
 
     private boolean isFoundInOtherMaybe(List<Cell> cellList, Cell cell, Character maybeVal) {
@@ -170,15 +208,15 @@ public class SudokuSolver {
     }
 
     private void evalAllExclusivePairs(Board board) {
-        for (int row = 1; row < 9; row++) {
+        for (int row = 1; row < 10; row++) {
             evalExclusivePairs(board.getRow(row), board);
             board.isValid();
         }
-        for (int col = 1; col < 9; col++) {
+        for (int col = 1; col < 10; col++) {
             evalExclusivePairs(board.getColumn(col), board);
             board.isValid();
         }
-        for (int g = 1; g < 9; g++) {
+        for (int g = 1; g < 10; g++) {
             evalExclusivePairs(board.getGrid(g), board);
             board.isValid();
         }
@@ -242,15 +280,16 @@ public class SudokuSolver {
     }
 
     private void evalAllHiddenPairs(Board board) {
-        for (int row = 1; row < 9; row++) {
+        for (int row = 1; row < 10; row++) {
+            board.print("eval hidden pairs, row " + row);
             evalHiddenPairs(board.getRow(row), board);
             board.isValid();
         }
-        for (int col = 1; col < 9; col++) {
+        for (int col = 1; col < 10; col++) {
             evalHiddenPairs(board.getColumn(col), board);
             board.isValid();
         }
-        for (int g = 1; g < 9; g++) {
+        for (int g = 1; g < 10; g++) {
             evalHiddenPairs(board.getGrid(g), board);
             board.isValid();
         }
