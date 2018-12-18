@@ -4,7 +4,7 @@ import java.util.*;
 
 public class Board {
 
-    private Map<Pos, Cell> map;
+    private Map<Pos, Cell> cellMap;
     private SudokuValidator validator;
 
     private static final Set<Character> ALL_VALUES = Collections.unmodifiableSet(new TreeSet<>(
@@ -32,7 +32,7 @@ public class Board {
 
 
     private Board() {
-        this.map = new TreeMap<>();
+        this.cellMap = new TreeMap<>();
         this.validator = new SudokuValidator();
     }
 
@@ -50,13 +50,13 @@ public class Board {
     }
 
     public void add(Cell cell) {
-        if (map.containsKey(cell.pos)) throw new IllegalArgumentException("already exists");
-        map.put(cell.pos, cell);
+        if (cellMap.containsKey(cell.pos)) throw new IllegalArgumentException("already exists");
+        cellMap.put(cell.pos, cell);
     }
 
     public Cell getCell(Pos pos) {
-        if (map.containsKey(pos)) {
-            return map.get(pos);
+        if (cellMap.containsKey(pos)) {
+            return cellMap.get(pos);
         } else {
             throw new IllegalArgumentException("not found");
         }
@@ -154,32 +154,30 @@ public class Board {
         return boardArray;
     }
 
-    public void print() {
-        print("");
-    }
-
     public long remaining() {
-        return map.values().stream()
+        return cellMap.values().stream()
                 .filter(cell -> !cell.val.isPresent())
                 .count();
     }
 
     public boolean isComplete() {
-        return remaining() == 0;
+        return isValid() && remaining() == 0;
     }
 
     public boolean isValid() {
-        return validator.isValidSudoku(this.asArray());
+        if (validator.isValidSudoku(this.asArray())) {
+            return true;
+        } else {
+            throw new RuntimeException("Invalid board");
+        }
     }
 
-    public void print(String msg) {
+    /*
+     * print without maybe info
+     */
+    public void print() {
         char[][] boardArray = asArray();
         StringBuilder sb = new StringBuilder();
-        if (!msg.isEmpty()) {
-            sb.append(msg).append(", remaining: " + remaining());
-        } else {
-            sb.append("remaining: " + remaining());
-        }
         sb.append("\n -------------------------\n");
 
         for (int i = 0; i < boardArray.length; i++) {
@@ -193,5 +191,59 @@ public class Board {
         }
 
         System.out.println(sb.toString());
+    }
+
+    public void print(String msg) {
+        StringBuilder sb = new StringBuilder();
+        if (!msg.isEmpty()) {
+            sb.append(msg).append(", remaining: ").append(remaining());
+        } else {
+            sb.append("remaining: ").append(remaining());
+        }
+
+        long maxMaybeSize = maxMaybeSize();
+        horizontalLine(sb, maxMaybeSize);
+        sb.append('\n');
+
+        for (int i = 1; i < 10; i++) {
+            for (int j = 1; j < 10; j++) {
+                if ((j - 1) % 3 == 0) sb.append(" |");
+                Cell cell = cellMap.get(Pos.of(i, j));
+                sb.append(' ').append(cell.val.orElse('.'));
+
+
+                if (cell.maybe.isEmpty()) {
+                    for (int k = 0; k < maxMaybeSize; k++) {
+                        sb.append(' ');
+                    }
+                } else {
+                    for (Character m : cell.maybe) {
+                        sb.append(m);
+                    }
+                    for (int k = 0; k < (maxMaybeSize - cell.maybe.size()); k++) {
+                        sb.append(' ');
+                    }
+                }
+            }
+            sb.append(" |");
+            if (i % 3 == 0) horizontalLine(sb, maxMaybeSize);
+            sb.append('\n');
+        }
+
+        System.out.println(sb.toString());
+    }
+
+    private void horizontalLine(StringBuilder sb, long maxMaybeSize) {
+        sb.append("\n -------------------------");
+        for (int i = 0; i < (maxMaybeSize * 9); i++) {
+            sb.append('-');
+        }
+    }
+
+    private long maxMaybeSize() {
+        return cellMap.values().stream()
+                .map(c -> c.maybe.size())
+                .max(Comparator.comparing(Integer::valueOf))
+                .orElse(0);
     }
 }

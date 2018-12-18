@@ -1,6 +1,5 @@
 package alf.exercises.leetcode.sudoku;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -11,20 +10,28 @@ public class SudokuSolver {
         Board board = Board.of(boardArray);
         board.print("Begin");
         int attempts = solve(board);
-        board.print("Finished, attempts = " + attempts);
+
+        board.print();
+        System.out.println("Finished attempts = " + attempts
+                        + (board.isComplete() ? "" : " NOT Complete !!"));
 
         return board.asArray();
     }
 
     protected int solve(Board board) {
         int attempts = 0;
-        while (attempts < 10 && !board.isComplete()) {
+        long prevRemaining = Integer.MAX_VALUE;
+
+        while (!board.isComplete() && board.remaining() < prevRemaining) {
+
+            prevRemaining = board.remaining();
+            attempts++;
 
             evalAllRows(board);
             evalAllColumns(board);
             evalAllGrids(board);
-            attempts++;
-            System.out.println("after attempt: " + attempts + " remaining:" + board.remaining());
+
+            board.print("After attempt: " + attempts);
         }
         return attempts;
     }
