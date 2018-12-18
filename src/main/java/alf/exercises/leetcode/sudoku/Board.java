@@ -38,7 +38,6 @@ public class Board {
 
     public static Board of(char[][] boardArray) {
         Board board = new Board();
-        if (!board.validator.isValidSudoku(boardArray)) throw new IllegalArgumentException("invalid board");
 
         for (int i = 0; i < boardArray.length; i++) {
             for (int j = 0; j < boardArray[i].length; j++) {
@@ -47,6 +46,10 @@ public class Board {
         }
 
         return board;
+    }
+
+    public int size() {
+        return cellMap.values().size();
     }
 
     public void add(Cell cell) {
@@ -64,6 +67,10 @@ public class Board {
 
     public Cell getCell(int row, int col) {
         return getCell(Pos.of(row, col));
+    }
+
+    public Collection<Cell> getAllCells() {
+        return cellMap.values();
     }
 
     public List<Cell> getRow(int row) {
@@ -165,7 +172,7 @@ public class Board {
     }
 
     public boolean isValid() {
-        if (validator.isValidSudoku(this.asArray())) {
+        if (validator.isValidSudoku(this)) {
             return true;
         } else {
             throw new RuntimeException("Invalid board");

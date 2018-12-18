@@ -5,9 +5,9 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-public class SudokuValidatorTest {
+public class SudokuValidatorV1Test {
 
-    SudokuValidator validator = new SudokuValidator();
+    SudokuValidatorV1 ex = new SudokuValidatorV1();
     char[][] input = new char[9][9];
 
     @Before
@@ -25,33 +25,55 @@ public class SudokuValidatorTest {
 
     @Test
     public void allValid() {
-        assertTrue(validator.isValidSudoku(Board.of(input)));
-        assertFalse(validator.isValidSudoku(null));
+        assertTrue(ex.isValidSudoku(input));
+        assertFalse(ex.isValidSudoku(null));
     }
 
     @Test
     public void invalidRow() {
         input[0][6] = '3';
-        assertFalse(validator.isValidSudoku(Board.of(input)));
+        assertFalse(ex.isValidSudoku(input));
     }
 
     @Test
     public void invalidColumn() {
         input[7][0] = '8';
-        assertFalse(validator.isValidSudoku(Board.of(input)));
+        assertFalse(ex.isValidSudoku(input));
     }
 
     @Test
     public void invalidGrid() {
         input[5][5] = '8';
-        assertFalse(validator.isValidSudoku(Board.of(input)));
+        assertFalse(ex.isValidSudoku(input));
     }
 
     @Test
     public void isValidCharacters() {
 
-        assertTrue(validator.isValidCharacters(Board.of(input)));
+        assertTrue(ex.isValidCharacters(input));
         input[5][5] = 'a';
-        assertFalse(validator.isValidCharacters(Board.of(input)));
+        assertFalse(ex.isValidCharacters(input));
+    }
+
+    @Test
+    public void hasDuplicates() {
+
+        assertFalse(ex.hasDuplicates(new char[]{'1','2','3'}));
+        assertFalse(ex.hasDuplicates(new char[]{'1','2','.','3','.'}));
+        assertTrue(ex.hasDuplicates(new char[]{'1','2','.','2','.'}));
+    }
+
+    @Test
+    public void getColumn() {
+
+        assertArrayEquals(new char[]{'5','6','.','8','4','7','.','.','.'} , ex.getColumn(input, 0));
+        assertArrayEquals(new char[]{'7','9','.','6','.','2','.','1','8'} , ex.getColumn(input, 4));
+    }
+
+    @Test
+    public void getGrid() {
+
+        assertArrayEquals(new char[]{'5','3','.','6','.','.','.','9','8'} , ex.getGrid(input, 0));
+        assertArrayEquals(new char[]{'.','6','.','8','.','3','.','2','.'} , ex.getGrid(input, 4));
     }
 }

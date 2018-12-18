@@ -1,9 +1,11 @@
 package alf.exercises.leetcode.sudoku;
 
-import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import java.util.*;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class SudokuSolverTest {
 
@@ -73,6 +75,61 @@ public class SudokuSolverTest {
                 [["5","1","9","7","4","8","6","3","2"],["7","8","3","6","5","2","4","1","9"],["4","2","6","1","3","9","8","7","5"],["3","5","7","9","8","6","2","4","1"],["2","6","4","3","1","7","5","9","8"],["1","9","8","5","2","4","3","6","7"],["9","7","5","8","6","3","1","2","4"],["8","3","2","4","9","1","7","5","6"],["6","4","1","2","7","5","9","8","3"]]
 */
         assertTrue(isComplete(solver.solve(parse(input))));
+    }
+
+    @Test
+    public void testGetHiddenPairs() {
+        List<Cell> cellList = new ArrayList<>();
+        cellList.add(Cell.of(1, 1, '4'));
+        cellList.add(Cell.of(2, 1, '8'));
+        cellList.add(Cell.of(3, 1, '1'));
+        cellList.add(Cell.of(4, 1, '.'));
+        cellList.add(Cell.of(5, 1, '.'));
+        cellList.add(Cell.of(6, 1, '.'));
+        cellList.add(Cell.of(7, 1, '.'));
+        cellList.add(Cell.of(8, 1, '.'));
+        cellList.add(Cell.of(9, 1, '.'));
+
+        cellList.get(4 - 1).maybe.addAll(Arrays.asList('2','3'));
+        cellList.get(5 - 1).maybe.addAll(Arrays.asList('2','3','5','6','7'));
+        cellList.get(6 - 1).maybe.addAll(Arrays.asList('2','3','5','6','7'));
+        cellList.get(7 - 1).maybe.addAll(Arrays.asList('2','9'));
+        cellList.get(8 - 1).maybe.addAll(Arrays.asList('2','3','5'));
+        cellList.get(9 - 1).maybe.addAll(Arrays.asList('2','3','9'));
+
+        Map<TreeSet<Character>, TreeSet<Pos>> hiddenPairs = solver.getHiddenPairs(cellList);
+        assertEquals(1, hiddenPairs.size());
+        TreeSet<Character> expectedKey = new TreeSet<>(Arrays.asList('6','7'));
+
+        assertTrue(hiddenPairs.containsKey(expectedKey));
+        assertEquals(2, hiddenPairs.get(expectedKey).size());
+        assertEquals(Pos.of(5, 1), hiddenPairs.get(expectedKey).first());
+        assertEquals(Pos.of(6, 1), hiddenPairs.get(expectedKey).last());
+    }
+
+    @Test
+    public void testEvalHiddenPairs() {
+        List<Cell> cellList = new ArrayList<>();
+        cellList.add(Cell.of(1, 1, '4'));
+        cellList.add(Cell.of(2, 1, '8'));
+        cellList.add(Cell.of(3, 1, '1'));
+        cellList.add(Cell.of(4, 1, '.'));
+        cellList.add(Cell.of(5, 1, '.'));
+        cellList.add(Cell.of(6, 1, '.'));
+        cellList.add(Cell.of(7, 1, '.'));
+        cellList.add(Cell.of(8, 1, '.'));
+        cellList.add(Cell.of(9, 1, '.'));
+
+        cellList.get(4 - 1).maybe.addAll(Arrays.asList('2','3'));
+        cellList.get(5 - 1).maybe.addAll(Arrays.asList('2','3','5','6','7'));
+        cellList.get(6 - 1).maybe.addAll(Arrays.asList('2','3','5','6','7'));
+        cellList.get(7 - 1).maybe.addAll(Arrays.asList('2','9'));
+        cellList.get(8 - 1).maybe.addAll(Arrays.asList('2','3','5'));
+        cellList.get(9 - 1).maybe.addAll(Arrays.asList('2','3','9'));
+
+        solver.evalHiddenPairs(cellList, null);
+        assertEquals(2, cellList.get(5 -1).maybe.size());
+        assertEquals(2, cellList.get(6 -1).maybe.size());
     }
 
     private char[][] parse(String s) {

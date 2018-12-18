@@ -1,7 +1,6 @@
 package alf.exercises.leetcode.sudoku;
 
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class SudokuSolver {
 
@@ -9,6 +8,8 @@ public class SudokuSolver {
 
         Board board = Board.of(boardArray);
         board.print("Begin");
+        board.isValid();
+
         int attempts = solve(board);
 
         board.print();
@@ -30,6 +31,8 @@ public class SudokuSolver {
             evalAllRows(board);
             evalAllColumns(board);
             evalAllGrids(board);
+//            evalAllExclusivePairs(board);
+//            evalAllHiddenPairs(board);
 
             board.print("After attempt: " + attempts);
         }
@@ -61,7 +64,6 @@ public class SudokuSolver {
         }
 
         evalMaybe(row, board);
-//        if (!board.isValid()) throw new RuntimeException("board invalid after eval row: " + r);
     }
 
     protected void evalAllColumns(Board board) {
@@ -89,7 +91,6 @@ public class SudokuSolver {
         }
 
         evalMaybe(column, board);
-//        if (!board.isValid()) throw new RuntimeException("board invalid after eval column: " + c);
     }
 
     protected void evalAllGrids(Board board) {
@@ -117,40 +118,25 @@ public class SudokuSolver {
         }
 
         evalMaybe(grid, board);
-//        if (!board.isValid()) throw new RuntimeException("board invalid after eval grid: " + g);
-    }
-
-    private boolean containsValue(List<Cell> cellList, Character value) {
-        for (Cell c : cellList) {
-            if (c.val.isPresent() && c.val.get().equals(value)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private void evalMaybe(List<Cell> cellList, Board board) {
-        boolean somethingWasChanged;
-        do {
-            somethingWasChanged = false;
-            for (Cell cell : cellList) {
-                if (!cell.val.isPresent()) {
+        for (Cell cell : cellList) {
+            if (!cell.val.isPresent()) {
 
-                    boolean needToClearMaybe = false;
-                    for (Character maybeVal : cell.maybe) {
+                List<Character> copyOfMaybe = new ArrayList<>(cell.maybe);
+                for (Character maybeChar : copyOfMaybe) {
 
-                        if (!isFoundInOtherMaybe(cellList, cell, maybeVal)) {
-                            cell.setVal(maybeVal);
-                            somethingWasChanged = true;
-                            needToClearMaybe = true;
-                            // remove maybe val from col, row, and grid
-                            removeMaybeValFromNeighbors(maybeVal, cell, board);
-                        }
+                    if (!isFoundInOtherMaybe(cellList, cell, maybeChar)) {
+                        cell.setVal(maybeChar);
+                        cell.maybe.clear();
+
+                        // remove maybe val from col, row, and grid
+                        removeMaybeValFromNeighbors(maybeChar, cell, board);
                     }
-                    if (needToClearMaybe) cell.maybe.clear();
                 }
             }
-        } while (somethingWasChanged);
+        }
     }
 
     private boolean isFoundInOtherMaybe(List<Cell> cellList, Cell cell, Character maybeVal) {
@@ -181,6 +167,161 @@ public class SudokuSolver {
                 other.maybe.remove(maybeVal);
             }
         }
+    }
+
+    private void evalAllExclusivePairs(Board board) {
+        for (int row = 1; row < 9; row++) {
+            evalExclusivePairs(board.getRow(row), board);
+            board.isValid();
+        }
+        for (int col = 1; col < 9; col++) {
+            evalExclusivePairs(board.getColumn(col), board);
+            board.isValid();
+        }
+        for (int g = 1; g < 9; g++) {
+            evalExclusivePairs(board.getGrid(g), board);
+            board.isValid();
+        }
+    }
+
+    private void evalExclusivePairs(List<Cell> cellList, Board board) {
+        for (Map.Entry<Set<Character>, TreeSet<Pos>> entry : getExclusivePairs(cellList).entrySet()) {
+            Pos posA = entry.getValue().first();
+            Pos posB = entry.getValue().last();
+
+            if (posA.row == posB.row) {
+                // remove from other maybes in same row
+                List<Cell> row = board.getRow(entry.getValue().first().row);
+                for (Cell rowCell : row) {
+                    if (!rowCell.pos.equals(posA) && !rowCell.pos.equals(posB)) {
+                        for (Character p : entry.getKey()) {
+                            rowCell.maybe.remove(p);
+                        }
+                    }
+                }
+            }
+
+            if (posA.col == posB.col) {
+                // remove from other maybes in same column
+                List<Cell> column = board.getColumn(entry.getValue().first().col);
+                for (Cell colCell : column) {
+                    if (!colCell.pos.equals(posA) && !colCell.pos.equals(posB)) {
+                        for (Character p : entry.getKey()) {
+                            colCell.maybe.remove(p);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private Map<Set<Character>, TreeSet<Pos>> getExclusivePairs(List<Cell> cellList) {
+        Map<Set<Character>, TreeSet<Pos>> pairs = new HashMap<>();
+
+        for (Cell cell : cellList) {
+            if (cell.maybe.size() == 2) {
+                Set<Character> pair = cell.maybe;
+                if (pairs.containsKey(pair)) {
+                    pairs.get(pair).add(cell.pos);
+                } else {
+                    TreeSet<Pos> posSet = new TreeSet<>();
+                    posSet.add(cell.pos);
+                    pairs.put(pair, posSet);
+                }
+            }
+        }
+
+        // keep only those which are exclusive pairs
+        Map<Set<Character>, TreeSet<Pos>> exclusivePairs = new HashMap<>();
+        for (Map.Entry<Set<Character>, TreeSet<Pos>> entry : pairs.entrySet()) {
+            if (entry.getValue().size() == 2) {
+                exclusivePairs.put(entry.getKey(), entry.getValue());
+            }
+        }
+        return exclusivePairs;
+    }
+
+    private void evalAllHiddenPairs(Board board) {
+        for (int row = 1; row < 9; row++) {
+            evalHiddenPairs(board.getRow(row), board);
+            board.isValid();
+        }
+        for (int col = 1; col < 9; col++) {
+            evalHiddenPairs(board.getColumn(col), board);
+            board.isValid();
+        }
+        for (int g = 1; g < 9; g++) {
+            evalHiddenPairs(board.getGrid(g), board);
+            board.isValid();
+        }
+    }
+
+    protected void evalHiddenPairs(List<Cell> cellList, Board board) {
+
+        for (Map.Entry<TreeSet<Character>, TreeSet<Pos>> entry : getHiddenPairs(cellList).entrySet()) {
+            for (Cell cell : cellList) {
+                if (cell.pos.equals(entry.getValue().first()) || cell.pos.equals(entry.getValue().last())) {
+                    cell.maybe = entry.getKey();
+                }
+            }
+        }
+    }
+
+    protected Map<TreeSet<Character>, TreeSet<Pos>> getHiddenPairs(List<Cell> cellList) {
+
+        Map<Character, TreeSet<Pos>> charactersPositions = new HashMap<>();
+        for (Cell cell : cellList) {
+            for (Character m : cell.maybe) {
+                if (charactersPositions.containsKey(m)) {
+                    charactersPositions.get(m).add(cell.pos);
+                } else {
+                    TreeSet<Pos> posSet = new TreeSet<>();
+                    posSet.add(cell.pos);
+                    charactersPositions.put(m, posSet);
+                }
+            }
+        }
+
+        Map<Pos, TreeSet<Character>> positionCharacters = new HashMap<>();
+        for (Map.Entry<Character, TreeSet<Pos>> entry : charactersPositions.entrySet()) {
+            if (entry.getValue().size() == 2) {
+                Character m = entry.getKey();
+                for (Pos pos : entry.getValue()) {
+                    if (positionCharacters.containsKey(pos)) {
+                        positionCharacters.get(pos).add(m);
+                    } else {
+                        TreeSet<Character> characterSet = new TreeSet<>();
+                        characterSet.add(m);
+                        positionCharacters.put(pos, characterSet);
+                    }
+                }
+            }
+        }
+
+        Map<TreeSet<Character>, TreeSet<Pos>> hiddenPairs = new HashMap<>();
+        for (Map.Entry<Pos, TreeSet<Character>> entry : positionCharacters.entrySet()) {
+            if (entry.getValue().size() == 2) {
+                TreeSet<Character> hiddenPairKey = entry.getValue();
+                if (hiddenPairs.containsKey(hiddenPairKey)) {
+                    hiddenPairs.get(hiddenPairKey).add(entry.getKey());
+                } else {
+                    TreeSet<Pos> posTreeSet = new TreeSet<>();
+                    posTreeSet.add(entry.getKey());
+                    hiddenPairs.put(hiddenPairKey, posTreeSet);
+                }
+            }
+        }
+
+        return hiddenPairs;
+    }
+
+    private boolean containsValue(List<Cell> cellList, Character value) {
+        for (Cell c : cellList) {
+            if (c.val.isPresent() && c.val.get().equals(value)) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }
