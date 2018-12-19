@@ -132,6 +132,7 @@ public class SudokuSolver {
 
             for (int g = 1; g < 10; g++) {
                 numberOfChanges += processMaybeForGroup(board.getGrid(g), board);
+                numberOfChanges += gridRowColumnInteraction(board.getGrid(g), board);
             }
 
         } while (numberOfChanges > 0);
@@ -231,6 +232,57 @@ public class SudokuSolver {
                 }
             }
         }
+    }
+
+    protected int gridRowColumnInteraction(List<Cell> cellList, Board board) {
+        int changeCount = 0;
+        boolean changeOccured;
+        do {
+            changeOccured = false;
+            for (Character c : board.copyValidValues()) {
+                TreeSet<Pos> maybeCharPosSet = findMaybeCharacterPositions(c, cellList);
+                if (2 == maybeCharPosSet.size()) {
+
+                    if (maybeCharPosSet.first().row == maybeCharPosSet.last().row) {
+                        // same row, remove maybe char from others in same row
+                        for (Cell rowCell : board.getRow(maybeCharPosSet.first().row)) {
+                            if (!maybeCharPosSet.contains(rowCell.pos)) {
+                                if (rowCell.maybe.contains(c)) {
+                                    rowCell.maybe.remove(c);
+                                    changeOccured = true;
+                                    changeCount++;
+                                }
+                            }
+                        }
+                    }
+
+                    if (maybeCharPosSet.first().col == maybeCharPosSet.last().col) {
+                        // same col
+                        for (Cell colCell : board.getColumn(maybeCharPosSet.first().col)) {
+                            if (!maybeCharPosSet.contains(colCell.pos)) {
+                                if (colCell.maybe.contains(c)) {
+                                    colCell.maybe.remove(c);
+                                    changeOccured = true;
+                                    changeCount++;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+        } while (changeOccured);
+        return changeCount;
+    }
+
+    private TreeSet<Pos> findMaybeCharacterPositions(Character c, List<Cell> cellList) {
+        TreeSet<Pos> result = new TreeSet<>();
+        for (Cell cell : cellList) {
+            if (cell.maybe.contains(c)) {
+                result.add(cell.pos);
+            }
+        }
+        return result;
     }
 
     private void evalAllPairs(Board board) {

@@ -7,7 +7,7 @@ public class Board {
     private Map<Pos, Cell> cellMap;
     private SudokuValidator validator;
 
-    private static final Set<Character> ALL_VALUES = Collections.unmodifiableSet(new TreeSet<>(
+    private static final Set<Character> VALID_VALUES = Collections.unmodifiableSet(new TreeSet<>(
             Arrays.asList('1', '2', '3', '4', '5', '6', '7', '8', '9')));
 
     private static final int[] GRID_ROW_OFFSET = new int[]{0, 1, 1, 1, 4, 4, 4, 7, 7, 7};
@@ -122,7 +122,7 @@ public class Board {
     }
 
     public Set<Character> getMissingForRow(int row) {
-        Set<Character> missing = copyAllValues();
+        Set<Character> missing = copyValidValues();
         for (Cell cell : getRow(row)) {
             cell.val.ifPresent(missing::remove);
         }
@@ -130,7 +130,7 @@ public class Board {
     }
 
     public Set<Character> getMissingForColumn(int col) {
-        Set<Character> missing = copyAllValues();
+        Set<Character> missing = copyValidValues();
         for (Cell cell : getColumn(col)) {
             cell.val.ifPresent(missing::remove);
         }
@@ -138,15 +138,15 @@ public class Board {
     }
 
     public Set<Character> getMissingForGrid(int g) {
-        Set<Character> missing = copyAllValues();
+        Set<Character> missing = copyValidValues();
         for (Cell cell : getGrid(g)) {
             cell.val.ifPresent(missing::remove);
         }
         return missing;
     }
 
-    private Set<Character> copyAllValues() {
-        return ALL_VALUES.stream().collect(TreeSet::new, TreeSet::add, TreeSet::addAll);
+    public Set<Character> copyValidValues() {
+        return VALID_VALUES.stream().collect(TreeSet::new, TreeSet::add, TreeSet::addAll);
     }
 
     public char[][] asArray() {
