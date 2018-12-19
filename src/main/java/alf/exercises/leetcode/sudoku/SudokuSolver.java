@@ -10,41 +10,43 @@ public class SudokuSolver {
         board.print("Begin");
         board.isValid();
 
-        int attempts = solve(board);
+        solve(board);
 
         board.print();
-        System.out.println("Finished attempts = " + attempts
-                        + (board.isComplete() ? "" : " NOT Complete !!"));
+        System.out.println("Finished" + (board.isComplete() ? "" : " NOT Complete !!"));
 
         return board.asArray();
     }
 
-    protected int solve(Board board) {
-        int attempts = 0;
-        long prevRemaining = Integer.MAX_VALUE;
+    protected void solve(Board board) {
 
-        while (!board.isComplete() && board.remaining() < prevRemaining) {
+        computeMaybeAllRows(board);
+        computeMaybeAllColumns(board);
+        computeMaybeAllGrids(board);
 
-            prevRemaining = board.remaining();
-            attempts++;
 
-            computeMaybeAllRows(board);
-            computeMaybeAllColumns(board);
-            computeMaybeAllGrids(board);
+        board.print("before first maybe process");
+        processAllMaybe(board);
+        if (board.isComplete()) return;
 
-            processAllMaybe(board);
+        board.print("after first maybe process");
 
-//            evalAllExclusivePairs(board);
-//            evalAllHiddenPairs(board);
+        evalAllHiddenPairs(board);
+        board.print("after eval all hidden pairs");
+        processAllMaybe(board);
+        if (board.isComplete()) return;
 
-            board.print("After attempt: " + attempts);
-        }
-        return attempts;
+        board.print("after second maybe process");
+        evalAllExclusivePairs(board);
+        processAllMaybe(board);
+
+        board.print("after third maybe process");
     }
 
     protected void computeMaybeAllRows(Board board) {
         for (int r = 1; r < 10; r++) {
             computeMaybeRow(board, r);
+            board.isValid();
         }
     }
 
@@ -53,13 +55,13 @@ public class SudokuSolver {
         List<Cell> row = board.getRow(r);
         Set<Character> missingForRow = board.getMissingForRow(r);
         for (Character missing : missingForRow) {
-            for(Cell cell : row) {
-                if (!cell.val.isPresent()) {
-                    List<Cell> column = board.getColumn(cell.pos.col);
+            for(Cell rowCell : row) {
+                if (!rowCell.val.isPresent()) {
+                    List<Cell> column = board.getColumn(rowCell.pos.col);
                     if (!containsValue(column, missing)) {
-                        List<Cell> grid = board.getGrid(cell.pos);
+                        List<Cell> grid = board.getGrid(rowCell.pos);
                         if (!containsValue(grid, missing)) {
-                            cell.maybe.add(missing);
+                            rowCell.maybe.add(missing);
                         }
                     }
                 }
@@ -70,6 +72,7 @@ public class SudokuSolver {
     protected void computeMaybeAllColumns(Board board) {
         for (int c = 1; c < 10; c++) {
             computeMaybeColumn(board, c);
+            board.isValid();
         }
     }
 
@@ -78,13 +81,13 @@ public class SudokuSolver {
         List<Cell> column = board.getColumn(c);
         Set<Character> missingForCol = board.getMissingForColumn(c);
         for (Character missing : missingForCol) {
-            for(Cell cell : column) {
-                if (!cell.val.isPresent()) {
-                    List<Cell> row = board.getRow(cell.pos.row);
+            for(Cell columnCell : column) {
+                if (!columnCell.val.isPresent()) {
+                    List<Cell> row = board.getRow(columnCell.pos.row);
                     if (!containsValue(row, missing)) {
-                        List<Cell> grid = board.getGrid(cell.pos);
+                        List<Cell> grid = board.getGrid(columnCell.pos);
                         if (!containsValue(grid, missing)) {
-                            cell.maybe.add(missing);
+                            columnCell.maybe.add(missing);
                         }
                     }
                 }
@@ -95,6 +98,7 @@ public class SudokuSolver {
     protected void computeMaybeAllGrids(Board board) {
         for (int g = 1; g < 10; g++) {
             computeMaybeGrid(board, g);
+            board.isValid();
         }
     }
 
@@ -103,13 +107,13 @@ public class SudokuSolver {
         List<Cell> grid = board.getGrid(g);
         Set<Character> missingForGrid = board.getMissingForGrid(g);
         for (Character missing : missingForGrid) {
-            for(Cell cell : grid) {
-                if (!cell.val.isPresent()) {
-                    List<Cell> row = board.getRow(cell.pos.row);
+            for(Cell gridCell : grid) {
+                if (!gridCell.val.isPresent()) {
+                    List<Cell> row = board.getRow(gridCell.pos.row);
                     if (!containsValue(row, missing)) {
-                        List<Cell> column = board.getColumn(cell.pos.col);
+                        List<Cell> column = board.getColumn(gridCell.pos.col);
                         if (!containsValue(column, missing)) {
-                            cell.maybe.add(missing);
+                            gridCell.maybe.add(missing);
                         }
                     }
                 }
@@ -118,24 +122,24 @@ public class SudokuSolver {
     }
 
     private void processAllMaybe(Board board) {
-        processSingletons(board);
-        board.isValid();
+        int numberOfChanges;
+        do {
+            numberOfChanges = processSingletons(board);
 
-        for (int row = 1; row < 10; row++) {
-            processMaybeForGroup(board.getRow(row), board);
-            board.isValid();
-        }
-        for (int col = 1; col < 10; col++) {
-            processMaybeForGroup(board.getColumn(col), board);
-            board.isValid();
-        }
-        for (int g = 1; g < 10; g++) {
-            processMaybeForGroup(board.getGrid(g), board);
-            board.isValid();
-        }
+            for (int row = 1; row < 10; row++) {
+                numberOfChanges += processMaybeForGroup(board.getRow(row), board);
+            }
+            for (int col = 1; col < 10; col++) {
+                numberOfChanges += processMaybeForGroup(board.getColumn(col), board);
+            }
+            for (int g = 1; g < 10; g++) {
+                numberOfChanges += processMaybeForGroup(board.getGrid(g), board);
+            }
+        } while (numberOfChanges > 0);
     }
 
-    private void processSingletons(Board board) {
+    private int processSingletons(Board board) {
+        int changeCount = 0;
         boolean changeOccurred;
         do {
             changeOccurred = false;
@@ -146,6 +150,7 @@ public class SudokuSolver {
                     if (cell.maybe.size() == 1) {
                         Character maybeVal = cell.maybe.first();
                         changeOccurred = true;
+                        changeCount++;
                         cell.setVal(maybeVal);
                         cell.maybe.clear();
                         removeMaybeValFromNeighbors(maybeVal, cell, board);
@@ -153,9 +158,12 @@ public class SudokuSolver {
                 }
             }
         } while (changeOccurred);
+        board.isValid();
+        return changeCount;
     }
 
-    private void processMaybeForGroup(List<Cell> cellList, Board board) {
+    private int processMaybeForGroup(List<Cell> cellList, Board board) {
+        int changeCount = 0;
         boolean changeOccured;
         do {
             changeOccured = false;
@@ -167,6 +175,7 @@ public class SudokuSolver {
 
                         if (!isFoundInOtherMaybe(cellList, cell, maybeChar)) {
                             changeOccured = true;
+                            changeCount++;
                             cell.setVal(maybeChar);
                             cell.maybe.clear();
                             removeMaybeValFromNeighbors(maybeChar, cell, board);
@@ -175,6 +184,8 @@ public class SudokuSolver {
                 }
             }
         } while (changeOccured);
+        board.isValid();
+        return changeCount;
     }
 
     private boolean isFoundInOtherMaybe(List<Cell> cellList, Cell cell, Character maybeVal) {
@@ -231,9 +242,11 @@ public class SudokuSolver {
                 // remove from other maybes in same row
                 List<Cell> row = board.getRow(entry.getValue().first().row);
                 for (Cell rowCell : row) {
-                    if (!rowCell.pos.equals(posA) && !rowCell.pos.equals(posB)) {
-                        for (Character p : entry.getKey()) {
-                            rowCell.maybe.remove(p);
+                    if (!rowCell.val.isPresent()) {
+                        if (!rowCell.pos.equals(posA) && !rowCell.pos.equals(posB)) {
+                            for (Character p : entry.getKey()) {
+                                rowCell.maybe.remove(p);
+                            }
                         }
                     }
                 }
@@ -243,9 +256,11 @@ public class SudokuSolver {
                 // remove from other maybes in same column
                 List<Cell> column = board.getColumn(entry.getValue().first().col);
                 for (Cell colCell : column) {
-                    if (!colCell.pos.equals(posA) && !colCell.pos.equals(posB)) {
-                        for (Character p : entry.getKey()) {
-                            colCell.maybe.remove(p);
+                    if (!colCell.val.isPresent()) {
+                        if (!colCell.pos.equals(posA) && !colCell.pos.equals(posB)) {
+                            for (Character p : entry.getKey()) {
+                                colCell.maybe.remove(p);
+                            }
                         }
                     }
                 }
@@ -281,7 +296,6 @@ public class SudokuSolver {
 
     private void evalAllHiddenPairs(Board board) {
         for (int row = 1; row < 10; row++) {
-            board.print("eval hidden pairs, row " + row);
             evalHiddenPairs(board.getRow(row), board);
             board.isValid();
         }
@@ -297,56 +311,55 @@ public class SudokuSolver {
 
     protected void evalHiddenPairs(List<Cell> cellList, Board board) {
 
-        for (Map.Entry<TreeSet<Character>, TreeSet<Pos>> entry : getHiddenPairs(cellList).entrySet()) {
+        Map<TreeSet<Character>, TreeSet<Pos>> hiddenPairs = getHiddenPairs(cellList);
+        for (Map.Entry<TreeSet<Character>, TreeSet<Pos>> entry : hiddenPairs.entrySet()) {
             for (Cell cell : cellList) {
-                if (cell.pos.equals(entry.getValue().first()) || cell.pos.equals(entry.getValue().last())) {
-                    cell.maybe = entry.getKey();
-                }
-            }
-        }
-    }
-
-    protected Map<TreeSet<Character>, TreeSet<Pos>> getHiddenPairs(List<Cell> cellList) {
-
-        Map<Character, TreeSet<Pos>> charactersPositions = new HashMap<>();
-        for (Cell cell : cellList) {
-            for (Character m : cell.maybe) {
-                if (charactersPositions.containsKey(m)) {
-                    charactersPositions.get(m).add(cell.pos);
-                } else {
-                    TreeSet<Pos> posSet = new TreeSet<>();
-                    posSet.add(cell.pos);
-                    charactersPositions.put(m, posSet);
-                }
-            }
-        }
-
-        Map<Pos, TreeSet<Character>> positionCharacters = new HashMap<>();
-        for (Map.Entry<Character, TreeSet<Pos>> entry : charactersPositions.entrySet()) {
-            if (entry.getValue().size() == 2) {
-                Character m = entry.getKey();
-                for (Pos pos : entry.getValue()) {
-                    if (positionCharacters.containsKey(pos)) {
-                        positionCharacters.get(pos).add(m);
-                    } else {
-                        TreeSet<Character> characterSet = new TreeSet<>();
-                        characterSet.add(m);
-                        positionCharacters.put(pos, characterSet);
+                if (!cell.val.isPresent()) {
+                    if (cell.pos.equals(entry.getValue().first()) || cell.pos.equals(entry.getValue().last())) {
+                        cell.maybe = entry.getKey();
                     }
                 }
             }
         }
+//        board.isValid();
+    }
+
+    protected Map<TreeSet<Character>, TreeSet<Pos>> getHiddenPairs(List<Cell> cellList) {
+
+        Map<Character, TreeSet<Pos>> characterPositions = new HashMap<>();
+        for (Cell cell : cellList) {
+            for (Character m : cell.maybe) {
+                if (characterPositions.containsKey(m)) {
+                    characterPositions.get(m).add(cell.pos);
+                } else {
+                    TreeSet<Pos> posSet = new TreeSet<>();
+                    posSet.add(cell.pos);
+                    characterPositions.put(m, posSet);
+                }
+            }
+        }
+
+        // keep only those char which are found in exactly two positions
+        Map<Character, TreeSet<Pos>> characterPositionsTwo = new HashMap<>();
+        for (Map.Entry<Character, TreeSet<Pos>> entry : characterPositions.entrySet()) {
+            if (entry.getValue().size() == 2) {
+                characterPositionsTwo.put(entry.getKey(), entry.getValue());
+            }
+        }
 
         Map<TreeSet<Character>, TreeSet<Pos>> hiddenPairs = new HashMap<>();
-        for (Map.Entry<Pos, TreeSet<Character>> entry : positionCharacters.entrySet()) {
-            if (entry.getValue().size() == 2) {
-                TreeSet<Character> hiddenPairKey = entry.getValue();
-                if (hiddenPairs.containsKey(hiddenPairKey)) {
-                    hiddenPairs.get(hiddenPairKey).add(entry.getKey());
-                } else {
-                    TreeSet<Pos> posTreeSet = new TreeSet<>();
-                    posTreeSet.add(entry.getKey());
-                    hiddenPairs.put(hiddenPairKey, posTreeSet);
+        for (Map.Entry<Character, TreeSet<Pos>> thisEntry : characterPositionsTwo.entrySet()) {
+
+            Character thisCharKey = thisEntry.getKey();
+            TreeSet<Pos> thisPairOfPos = thisEntry.getValue();
+
+            for (Map.Entry<Character, TreeSet<Pos>> otherEntry : characterPositionsTwo.entrySet()) {
+                if (!thisCharKey.equals(otherEntry.getKey())) {
+                    if (thisPairOfPos.equals(otherEntry.getValue())) {
+                        // add to output map
+                        TreeSet<Character> hiddenPairKey = new TreeSet<>(Arrays.asList(thisCharKey, otherEntry.getKey()));
+                        hiddenPairs.put(hiddenPairKey, thisPairOfPos);
+                    }
                 }
             }
         }

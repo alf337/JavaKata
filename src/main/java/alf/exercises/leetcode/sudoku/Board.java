@@ -175,6 +175,8 @@ public class Board {
         if (validator.isValidSudoku(this)) {
             return true;
         } else {
+            print("!! Board is invalid !!");
+            print();
             throw new RuntimeException("Invalid board");
         }
     }

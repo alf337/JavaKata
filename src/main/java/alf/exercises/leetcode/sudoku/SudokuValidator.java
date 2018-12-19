@@ -60,7 +60,11 @@ public class SudokuValidator {
             if (cell.val.isPresent()) {
                 int digit = cell.val.get() - '1';
                 count[digit]++;
-                if (count[digit] > 1) return true;
+                if (count[digit] > 1) {
+                    System.out.println("*** duplicate value found: " + cell);
+                    System.out.println("*** cell list: " + cellList);
+                    return true;
+                }
             }
         }
         return false;
