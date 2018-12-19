@@ -125,12 +125,15 @@ public class SudokuSolver {
             for (int row = 1; row < 10; row++) {
                 numberOfChanges += processMaybeForGroup(board.getRow(row), board);
             }
+
             for (int col = 1; col < 10; col++) {
                 numberOfChanges += processMaybeForGroup(board.getColumn(col), board);
             }
+
             for (int g = 1; g < 10; g++) {
                 numberOfChanges += processMaybeForGroup(board.getGrid(g), board);
             }
+
         } while (numberOfChanges > 0);
     }
 
@@ -140,9 +143,7 @@ public class SudokuSolver {
         do {
             changeOccurred = false;
             for (Cell cell : board.getAllCells()) {
-                if (cell.val.isPresent()) {
-                    if (!cell.maybe.isEmpty()) throw new RuntimeException("??");
-                } else {
+                if (!cell.val.isPresent()) {
                     if (cell.maybe.size() == 1) {
                         Character maybeVal = cell.maybe.first();
                         changeOccurred = true;
@@ -199,17 +200,35 @@ public class SudokuSolver {
     private void removeMaybeValFromNeighbors(Character maybeVal, Cell cell, Board board) {
         for (Cell other : board.getRow(cell.pos.row)) {
             if (other != cell) {
-                other.maybe.remove(maybeVal);
+                if (other.maybe.contains(maybeVal)) {
+                    if (other.maybe.size() > 1) {
+                        other.maybe.remove(maybeVal);
+                    } else {
+                        throw new RuntimeException("Removing last maybe from neighbor: " + other + " at: " + cell);
+                    }
+                }
             }
         }
         for (Cell other : board.getColumn(cell.pos.col)) {
             if (other != cell) {
-                other.maybe.remove(maybeVal);
+                if (other.maybe.contains(maybeVal)) {
+                    if (other.maybe.size() > 1) {
+                        other.maybe.remove(maybeVal);
+                    } else {
+                        throw new RuntimeException("Removing last maybe from neighbor: " + other + " at: " + cell);
+                    }
+                }
             }
         }
         for (Cell other : board.getGrid(cell.pos)) {
             if (other != cell) {
-                other.maybe.remove(maybeVal);
+                if (other.maybe.contains(maybeVal)) {
+                    if (other.maybe.size() > 1) {
+                        other.maybe.remove(maybeVal);
+                    } else {
+                        throw new RuntimeException("Removing last maybe from neighbor: " + other + " at: " + cell);
+                    }
+                }
             }
         }
     }
@@ -248,7 +267,7 @@ public class SudokuSolver {
                     if (!cell.val.isPresent()) {
                         if (cell.pos.equals(entry.getValue().first()) || cell.pos.equals(entry.getValue().last())) {
                             if (!cell.maybe.equals(entry.getKey())) {
-                                cell.maybe = entry.getKey();
+                                cell.maybe = new TreeSet<>(entry.getKey());
                                 changeOccurred = true;
                                 changeCount++;
                             }
@@ -383,7 +402,7 @@ public class SudokuSolver {
 
         for (Cell cell : cellList) {
             if (cell.maybe.size() == 2) {
-                Set<Character> pair = cell.maybe;
+                Set<Character> pair = new TreeSet<>(cell.maybe);
                 if (pairs.containsKey(pair)) {
                     pairs.get(pair).add(cell.pos);
                 } else {
