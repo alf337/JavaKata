@@ -255,4 +255,35 @@ public class Board {
                 .max(Comparator.comparing(Integer::valueOf))
                 .orElse(0);
     }
+
+    public void printMaybeByValue() {
+        for (Character c : copyValidValues()) {
+            StringBuilder sb = new StringBuilder("Maybe: " + c);
+
+            long maxMaybeSize = 1;
+            horizontalLine(sb, maxMaybeSize);
+            sb.append('\n');
+
+            for (int i = 1; i < 10; i++) {
+                for (int j = 1; j < 10; j++) {
+                    if ((j - 1) % 3 == 0) sb.append(" |");
+                    Cell cell = cellMap.get(Pos.of(i, j));
+
+                    if (cell.val.isPresent() && cell.val.get().equals(c)) {
+                        sb.append(' ').append(cell.val.get()).append(' ');
+                    } else {
+                        if (cell.maybe.contains(c)) {
+                            sb.append(" ? ");
+                        } else {
+                            sb.append(" . ");
+                        }
+                    }
+                }
+                sb.append(" |");
+                if (i % 3 == 0) horizontalLine(sb, maxMaybeSize);
+                sb.append('\n');
+            }
+            System.out.println(sb.toString());
+        }
+    }
 }
