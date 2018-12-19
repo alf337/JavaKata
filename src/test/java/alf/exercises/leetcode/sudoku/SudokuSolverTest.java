@@ -164,6 +164,21 @@ public class SudokuSolverTest {
     }
 
     @Test
+    public void evil1() {
+
+        assertTrue(isComplete(solver.solve(parse(""
+                + "35.2.1..."
+                + "2..8..4.."
+                + ".......8."
+                + "5.3.6.2.."
+                + ".7.....3."
+                + "..9.7.8.5"
+                + ".1......."
+                + "..5..4..3"
+                + "...9.2.78"))));
+    }
+
+    @Test
     public void testGetHiddenPairs() {
         List<Cell> cellList = new ArrayList<>();
         cellList.add(Cell.of(1, 1, '4'));
@@ -233,7 +248,7 @@ public class SudokuSolverTest {
         cellList.get(8 - 1).maybe.addAll(Arrays.asList('2','3','5'));
         cellList.get(9 - 1).maybe.addAll(Arrays.asList('2','3','9'));
 
-        solver.evalHiddenPairs(cellList, null);
+        solver.evalHiddenPairs(cellList);
         assertEquals(2, cellList.get(5 -1).maybe.size());
         assertEquals(2, cellList.get(6 -1).maybe.size());
     }
