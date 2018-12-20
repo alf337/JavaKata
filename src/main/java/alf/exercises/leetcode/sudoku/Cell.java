@@ -26,7 +26,15 @@ public class Cell implements Comparable<Cell> {
             this.val = Optional.empty();
         } else {
             this.val = Optional.of(c);
+            this.maybe.clear();
         }
+    }
+
+    public Cell deepCopy() {
+        char dupVal = this.val.orElse('.');
+        Cell dupCell = Cell.of(this.pos.row, this.pos.col, dupVal);
+        dupCell.maybe.addAll(this.maybe);
+        return dupCell;
     }
 
 

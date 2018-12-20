@@ -181,6 +181,14 @@ public class Board {
         }
     }
 
+    public Board deepCopy() {
+        Board duplicate = new Board();
+        for (Cell original : getAllCells()) {
+            duplicate.add(original.deepCopy());
+        }
+        return duplicate;
+    }
+
     /*
      * print without maybe info
      */

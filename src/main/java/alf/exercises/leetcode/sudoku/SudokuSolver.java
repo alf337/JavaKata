@@ -6,12 +6,11 @@ public class SudokuSolver {
 
     public char[][] solve(char[][] boardArray) {
 
-        solveHard1(boardArray);
         Board board = Board.of(boardArray);
         board.print("Begin");
         board.isValid();
 
-        solve(board);
+        board = solve(board);
 
         board.print();
         System.out.println("Finished" + (board.isComplete() ? "" : " NOT Complete !!"));
@@ -19,34 +18,26 @@ public class SudokuSolver {
         return board.asArray();
     }
 
-    protected void solve(Board board) {
+    protected Board solve(Board board) {
 
         computeMaybeAllRows(board);
         computeMaybeAllColumns(board);
         computeMaybeAllGrids(board);
 
-
-        board.print("before first maybe process");
         processAllMaybe(board);
-        if (board.isComplete()) return;
 
-        board.print("after first maybe process");
+        if (!board.isComplete()) {
+            board = randomGuess(board);
+        }
 
-        evalAllPairs(board);
-        board.print("after eval all hidden pairs");
-        processAllMaybe(board);
-        if (board.isComplete()) return;
-
-        board.print("after second maybe process");
-
-        if (!board.isComplete()) board.printMaybeByValue();
-
+//        if (!board.isComplete()) board.printMaybeByValue();
+        return board;
     }
 
     protected void computeMaybeAllRows(Board board) {
         for (int r = 1; r < 10; r++) {
             computeMaybeRow(board, r);
-            board.isValid();
+            //board.isValid();
         }
     }
 
@@ -72,7 +63,7 @@ public class SudokuSolver {
     protected void computeMaybeAllColumns(Board board) {
         for (int c = 1; c < 10; c++) {
             computeMaybeColumn(board, c);
-            board.isValid();
+            //board.isValid();
         }
     }
 
@@ -98,7 +89,7 @@ public class SudokuSolver {
     protected void computeMaybeAllGrids(Board board) {
         for (int g = 1; g < 10; g++) {
             computeMaybeGrid(board, g);
-            board.isValid();
+            //board.isValid();
         }
     }
 
@@ -139,6 +130,8 @@ public class SudokuSolver {
                 numberOfChanges += gridRowColumnInteraction(board.getGrid(g), board);
             }
 
+            numberOfChanges += evalAllPairs(board);
+
         } while (numberOfChanges > 0);
     }
 
@@ -154,13 +147,12 @@ public class SudokuSolver {
                         changeOccurred = true;
                         changeCount++;
                         cell.setVal(maybeVal);
-                        cell.maybe.clear();
                         removeMaybeValFromNeighbors(maybeVal, cell, board);
                     }
                 }
             }
         } while (changeOccurred);
-        board.isValid();
+        //board.isValid();
         return changeCount;
     }
 
@@ -179,14 +171,13 @@ public class SudokuSolver {
                             changeOccured = true;
                             changeCount++;
                             cell.setVal(maybeChar);
-                            cell.maybe.clear();
                             removeMaybeValFromNeighbors(maybeChar, cell, board);
                         }
                     }
                 }
             }
         } while (changeOccured);
-        board.isValid();
+        //board.isValid();
         return changeCount;
     }
 
@@ -289,27 +280,30 @@ public class SudokuSolver {
         return result;
     }
 
-    private void evalAllPairs(Board board) {
-        int numberOfChanges;
+    private int evalAllPairs(Board board) {
+        int totalChangeCount = 0;
+        int loopChangeCount;
         do {
-            numberOfChanges = 0;
+            loopChangeCount = 0;
             for (int row = 1; row < 10; row++) {
-                numberOfChanges += evalHiddenPairs(board.getRow(row));
-                numberOfChanges += evalExclusivePairs(board.getRow(row), board);
-                board.isValid();
+                loopChangeCount += evalHiddenPairs(board.getRow(row));
+                loopChangeCount += evalExclusivePairs(board.getRow(row), board);
+                //board.isValid();
             }
             for (int col = 1; col < 10; col++) {
-                numberOfChanges += evalHiddenPairs(board.getColumn(col));
-                numberOfChanges += evalExclusivePairs(board.getColumn(col), board);
-                board.isValid();
+                loopChangeCount += evalHiddenPairs(board.getColumn(col));
+                loopChangeCount += evalExclusivePairs(board.getColumn(col), board);
+                //board.isValid();
             }
             for (int g = 1; g < 10; g++) {
-                numberOfChanges += evalHiddenPairs(board.getGrid(g));
-                numberOfChanges += evalExclusivePairs(board.getGrid(g), board);
-                board.isValid();
+                loopChangeCount += evalHiddenPairs(board.getGrid(g));
+                loopChangeCount += evalExclusivePairs(board.getGrid(g), board);
+                //board.isValid();
             }
+            totalChangeCount += loopChangeCount;
 
-        } while (numberOfChanges > 0);
+        } while (loopChangeCount > 0);
+        return totalChangeCount;
     }
 
     protected int evalHiddenPairs(List<Cell> cellList) {
@@ -377,32 +371,6 @@ public class SudokuSolver {
 
         return hiddenPairs;
     }
-
-/*
-    private int evalAllExclusivePairs(Board board) {
-        int changeCount = 0;
-        boolean changeOccurred;
-        do {
-            int prevChangeCount = changeCount;
-            for (int row = 1; row < 10; row++) {
-                changeCount += evalExclusivePairs(board.getRow(row), board);
-                board.isValid();
-            }
-            for (int col = 1; col < 10; col++) {
-                changeCount += evalExclusivePairs(board.getColumn(col), board);
-                board.isValid();
-            }
-            for (int g = 1; g < 10; g++) {
-                changeCount += evalExclusivePairs(board.getGrid(g), board);
-                board.isValid();
-            }
-
-            changeOccurred = (changeCount - prevChangeCount) > 0;
-
-        } while (changeOccurred);
-        return changeCount;
-    }
-*/
 
     private int evalExclusivePairs(List<Cell> cellList, Board board) {
         int numberOfChanges = 0;
@@ -488,43 +456,43 @@ public class SudokuSolver {
         return false;
     }
 
-    //*************
-    private void solveHard1(char[][] input) {
+    /**
+     * Try randomly setting a value to see if we can break through the log jam.
+     */
+    private Board randomGuess(Board originalBoard) {
+//        originalBoard.print("Original board before Random Guess");
+        for (Cell pick :  pickSome(originalBoard)) {
+//            System.out.println("PICK cell = " + pick);
+            for (Character pickChar : pick.maybe) {
+                try {
+                    Board dupBoard = originalBoard.deepCopy();
 
-        char[][] hard1 = new char[9][];
-        hard1[0] = new char[]{'.','.','9','7','4','8','.','.','.'};
-        hard1[1] = new char[]{'7','.','.','.','.','.','.','.','.'};
-        hard1[2] = new char[]{'.','2','.','1','.','9','.','.','.'};
-        hard1[3] = new char[]{'.','.','7','.','.','.','2','4','.'};
-        hard1[4] = new char[]{'.','6','4','.','1','.','5','9','.'};
-        hard1[5] = new char[]{'.','9','8','.','.','.','3','.','.'};
-        hard1[6] = new char[]{'.','.','.','8','.','3','.','2','.'};
-        hard1[7] = new char[]{'.','.','.','.','.','.','.','.','6'};
-        hard1[8] = new char[]{'.','.','.','2','7','5','9','.','.'};
+                    Cell guessCell = dupBoard.getCell(pick.pos);
+                    guessCell.setVal(pickChar);
+                    removeMaybeValFromNeighbors(pickChar, guessCell, dupBoard);
+//                    dupBoard.print("START random guess: " + guessCell);
 
-        char[][] hard1out = new char[9][];
-        hard1out[0] = new char[]{'5','1','9','7','4','8','6','3','2'};
-        hard1out[1] = new char[]{'7','8','3','6','5','2','4','1','9'};
-        hard1out[2] = new char[]{'4','2','6','1','3','9','8','7','5'};
-        hard1out[3] = new char[]{'3','5','7','9','8','6','2','4','1'};
-        hard1out[4] = new char[]{'2','6','4','3','1','7','5','9','8'};
-        hard1out[5] = new char[]{'1','9','8','5','2','4','3','6','7'};
-        hard1out[6] = new char[]{'9','7','5','8','6','3','1','2','4'};
-        hard1out[7] = new char[]{'8','3','2','4','9','1','7','5','6'};
-        hard1out[8] = new char[]{'6','4','1','2','7','5','9','8','3'};
+                    dupBoard.isValid();
+                    processAllMaybe(dupBoard);
+                    dupBoard.isValid();
+//                    dupBoard.print("After Random guess " + guessCell);
+                    if (dupBoard.isComplete()) return dupBoard;
 
-        boolean same = true;
-        for (int r = 0; r < 9; r++) {
-            if (!Arrays.equals(input[r], hard1[r])) same = false;
-        }
-
-        if (same) {
-            for (int r = 0; r < 9; r++) {
-                for (int c = 0; c < 9; c++) {
-                    input[r][c] = hard1out[r][c];
+                } catch (Exception e) {
+//                    e.printStackTrace();
                 }
             }
         }
+        return originalBoard;
     }
 
+    private List<Cell> pickSome(Board b) {
+        List<Cell> picked = new ArrayList<>();
+        for (Cell cell : b.getAllCells()) {
+            if (cell.maybe.size() == 2) {
+                picked.add(cell);
+            }
+        }
+        return picked;
+    }
 }
