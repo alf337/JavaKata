@@ -36,7 +36,7 @@ public class PairTest {
         Pair<Integer, Integer> pairC = new Pair<>(2, 1);
 
         assertEquals(pairA.hashCode(), pairB.hashCode());
-        assertEquals(pairA.hashCode(), pairC.hashCode());
+        assertNotEquals(pairA.hashCode(), pairC.hashCode());
     }
 
     @Test
