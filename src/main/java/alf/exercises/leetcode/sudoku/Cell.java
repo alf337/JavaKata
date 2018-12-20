@@ -18,7 +18,7 @@ public class Cell implements Comparable<Cell> {
     public static Cell of(int row, int col, char c) {
         return new Cell(
                 Pos.of(row, col),
-                c == '.' ? Optional.empty() : Optional.of(c));
+                c == '.' || c == '0' ? Optional.empty() : Optional.of(c));
     }
 
     public void setVal(Character c) {

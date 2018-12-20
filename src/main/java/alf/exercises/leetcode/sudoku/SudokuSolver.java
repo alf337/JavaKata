@@ -18,8 +18,19 @@ public class SudokuSolver {
         return board.asArray();
     }
 
+    public String solve(String boardString) {
+
+        Board board = Board.of(boardString);
+        board.isValid();
+//        board.print("");
+
+        Board result = solve(board);
+        return result.asString();
+    }
+
     protected Board solve(Board board) {
 
+        long remainingAtStart = board.remaining();
         computeMaybeAllRows(board);
         computeMaybeAllColumns(board);
         computeMaybeAllGrids(board);
@@ -28,6 +39,11 @@ public class SudokuSolver {
 
         if (!board.isComplete()) {
             board = randomGuess(board);
+            if (board.isComplete()) {
+                System.out.println("!! Hard Puzzle Solved " + remainingAtStart);
+            } else {
+                System.out.println("!!!! Not Solved " + remainingAtStart);
+            }
         }
 
 //        if (!board.isComplete()) board.printMaybeByValue();

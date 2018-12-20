@@ -48,6 +48,18 @@ public class Board {
         return board;
     }
 
+    public static Board of(String boardString) {
+        Board board = new Board();
+        int ix = 0;
+        for (int i = 1; i < 10; i++) {
+            for (int j = 1; j < 10; j++) {
+                char c = boardString.charAt(ix++);
+                board.add(Cell.of(i, j, c));
+            }
+        }
+        return board;
+    }
+
     public int size() {
         return cellMap.values().size();
     }
@@ -159,6 +171,18 @@ public class Board {
             }
         }
         return boardArray;
+    }
+
+    public String asString() {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 1; i < 10; i++) {
+            for (int j = 1; j < 10; j++) {
+                Cell cell = getCell(i, j);
+                sb.append(cell.val.orElse('0'));
+            }
+        }
+
+        return sb.toString();
     }
 
     public long remaining() {

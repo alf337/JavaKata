@@ -30,7 +30,7 @@ public class SudokuSolverTest {
     @Test
     public void easy2() {
 
-        assertTrue(isComplete(solver.solve(parse(""
+        assertTrue(isComplete(solver.solve(""
                 + "53..7...."
                 + "6..195..."
                 + ".98....6."
@@ -39,13 +39,13 @@ public class SudokuSolverTest {
                 + "7...2...6"
                 + ".6....28."
                 + "...419..5"
-                + "....8..79"))));
+                + "....8..79")));
     }
 
     @Test
     public void soleCandidate() {
 
-        char[][] result =solver.solve(parse(""
+        String result = solver.solve(""
                 + ".....1..."
                 + "........."
                 + ".....6..."
@@ -54,15 +54,16 @@ public class SudokuSolverTest {
                 + "2.9.....7"
                 + "........."
                 + ".....3..."
-                + "........."));
+                + ".........");
 
-        assertEquals('5', result[6-1][6-1]);
+        // row 6, col 6
+        assertEquals('5', result.charAt(((6 - 1) * 9) + (6 - 1)));
     }
 
     @Test
     public void uniqueCandidate() {
 
-        char[][] result =solver.solve(parse(""
+        String result =solver.solve(""
                 + "..4......"
                 + "........."
                 + "........."
@@ -71,15 +72,16 @@ public class SudokuSolverTest {
                 + "........."
                 + "5........"
                 + "........."
-                + ".....4..."));
+                + ".....4...");
 
-        assertEquals('4', result[8-1][1-1]);
+        // row 8, col 1
+        assertEquals('4', result.charAt(((8 - 1) * 9) + (1-1)));
     }
 
     @Test
     public void blockAndColumnRowInteraction() {
 
-        char[][] result =solver.solve(parse(""
+        solver.solve(""
                 + "....7...."
                 + "........."
                 + "........."
@@ -88,13 +90,13 @@ public class SudokuSolverTest {
                 + "...9.6..."
                 + "........."
                 + "........."
-                + "........."));
+                + ".........");
     }
 
     @Test
     public void medium1() {
 
-        assertTrue(isComplete(solver.solve(parse(""
+        assertTrue(isComplete(solver.solve(""
                 + ".5......."
                 + ".2736...5"
                 + "..9...426"
@@ -103,13 +105,13 @@ public class SudokuSolverTest {
                 + ".7..8...4"
                 + "284...6.."
                 + "6...4175."
-                + ".......4."))));
+                + ".......4.")));
     }
 
     @Test
     public void medium2() {
 
-        assertTrue(isComplete(solver.solve(parse(""
+        assertTrue(isComplete(solver.solve(""
                 + "..6..1..."
                 + "..5763.9."
                 + "..859...6"
@@ -118,13 +120,13 @@ public class SudokuSolverTest {
                 + "45......9"
                 + "9...861.."
                 + ".6.1498.."
-                + "...3..9.."))));
+                + "...3..9..")));
     }
 
     @Test
     public void hard1() {
 
-        assertTrue(isComplete(solver.solve(parse(""
+        assertTrue(isComplete(solver.solve(""
                 + "..9748..."
                 + "7........"
                 + ".2.1.9..."
@@ -133,7 +135,7 @@ public class SudokuSolverTest {
                 + ".98...3.."
                 + "...8.3.2."
                 + "........6"
-                + "...2759.."))));
+                + "...2759..")));
 /*
         expected result
                 [["5","1","9","7","4","8","6","3","2"],
@@ -155,13 +157,13 @@ public class SudokuSolverTest {
     *
     * [["3","1","2","5","4","7","8","6","9"],["9","4","7","6","8","1","2","3","5"],["6","5","8","9","3","2","7","1","4"],["1","8","5","3","6","4","9","7","2"],["2","9","3","7","1","8","4","5","6"],["4","7","6","2","9","5","3","8","1"],["8","6","4","1","2","3","5","9","7"],["7","2","9","8","5","6","1","4","3"],["5","3","1","4","7","9","6","2","8"]]
     * */
-        assertTrue(isComplete(solver.solve(parse(".....7..9.4..812.....9...1...53...72293....5......53..8...23...7...5..4.531.7...."))));
+        assertTrue(isComplete(solver.solve(".....7..9.4..812.....9...1...53...72293....5......53..8...23...7...5..4.531.7....")));
     }
 
     @Test
     public void hard3() {
 
-        assertTrue(isComplete(solver.solve(parse(""
+        assertTrue(isComplete(solver.solve(""
                 + "5.7.....3"
                 + "..4.1...."
                 + ".3.87.1.."
@@ -170,13 +172,13 @@ public class SudokuSolverTest {
                 + "..29....7"
                 + "..1.96.4."
                 + "....3.7.."
-                + "7.....2.9"))));
+                + "7.....2.9")));
     }
 
     @Test
     public void evil1() {
 
-        assertTrue(isComplete(solver.solve(parse(""
+        assertTrue(isComplete(solver.solve(""
                 + "35.2.1..."
                 + "2..8..4.."
                 + ".......8."
@@ -185,7 +187,7 @@ public class SudokuSolverTest {
                 + "..9.7.8.5"
                 + ".1......."
                 + "..5..4..3"
-                + "...9.2.78"))));
+                + "...9.2.78")));
     }
 
     @Test
@@ -263,21 +265,6 @@ public class SudokuSolverTest {
         assertEquals(2, cellList.get(6 -1).maybe.size());
     }
 
-    private char[][] parse(String s) {
-        if (s.length() != 81) throw new IllegalArgumentException("incorrect length " + s.length());
-        char[][] board = new char[9][];
-        int x = 0;
-        char[] chars = s.toCharArray();
-        for (int i = 0; i < 9; i++) {
-            char[] row = new char[9];
-            for (int j = 0; j < 9; j++) {
-                row[j] = chars[x++];
-            }
-            board[i] = row;
-        }
-        return board;
-    }
-
     private boolean isComplete(char[][] chars) {
         if (chars.length != 9) throw new RuntimeException("incorrect row length " + chars.length);
         for (int i = 0; i < chars.length; i++) {
@@ -285,6 +272,14 @@ public class SudokuSolverTest {
             for (int j = 0; j < chars[i].length; j++) {
                 if (chars[i][j] == '.') return false;
             }
+        }
+        return true;
+    }
+
+    private boolean isComplete(String chars) {
+        if (chars.length() != 81) throw new RuntimeException("incorrect length " + chars.length());
+        for (int i = 0; i < chars.length(); i++) {
+            if (chars.charAt(i) == '0') return false;
         }
         return true;
     }
