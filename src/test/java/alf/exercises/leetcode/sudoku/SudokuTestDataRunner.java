@@ -12,6 +12,7 @@ public class SudokuTestDataRunner {
     public static void main(String[] args) {
 
         int fail = 0;
+        int error = 0;
         int skip = 0;
         int pass = 0;
         int total = 0;
@@ -21,28 +22,44 @@ public class SudokuTestDataRunner {
 
         try {
 //            reader = openFile("/home/alan/Downloads/sudoku_test_data.csv");
-            reader = openFile("/home/alan/Downloads/sudoku_test_small.csv");
+//            reader = openFile("/home/alan/Downloads/sudoku_test_small.csv");
+
+//            reader = openFile("/home/alan/IdeaProjects/sudoku-generator/SudokuGenerator/dist/1545401541815.sudoku.data.txt");
+//            reader = openFile("/home/alan/IdeaProjects/sudoku-generator/SudokuGenerator/dist/1545401712949.sudoku.data.txt");
+//            reader = openFile("/home/alan/IdeaProjects/sudoku-generator/SudokuGenerator/dist/1545401725108.sudoku.data.txt");
+
+//            reader = openFile("/home/alan/IdeaProjects/sudoku-generator/SudokuGenerator/dist/1545403922433.sudoku.data.txt");
+//            reader = openFile("/home/alan/IdeaProjects/sudoku-generator/SudokuGenerator/dist/1545403936689.sudoku.data.txt");
+            reader = openFile("/home/alan/IdeaProjects/sudoku-generator/SudokuGenerator/dist/1545403946913.sudoku.data.txt");
+
             Optional<String> input = readLine(reader);
 
             while (input.isPresent() && total < 2_000_000) {
                 total++;
-                int r = processInput(input.get());
 
-                switch (r) {
-                    case 1:
-                        pass++;
-                        break;
-                    case -1:
-                        fail++;
-                        break;
-                    case 0:
-                        skip++;
-                        break;
-                    default:
-                        System.out.println("Unexpected return code " + r);
+                try {
+                    int r = processInput(input.get());
+
+                    switch (r) {
+                        case 1:
+                            pass++;
+                            break;
+                        case -1:
+                            fail++;
+                            break;
+                        case 0:
+                            skip++;
+                            break;
+                        default:
+                            System.out.println("Unexpected return code " + r);
+                    }
+
+                } catch (RuntimeException re) {
+                    error++;
+                    System.out.println("Error puzzle number: " + total + ", " + re.getMessage());
                 }
 
-                if (total % 1000 == 0) showCounts(total, pass, fail, skip, startTime);
+                if (total % 1000 == 0) showCounts(total, pass, fail, error, skip, startTime);
 
                 input = readLine(reader);
             }
@@ -51,7 +68,7 @@ public class SudokuTestDataRunner {
             closeFile(reader);
         }
 
-        showCounts(total, pass, fail, skip, startTime);
+        showCounts(total, pass, fail, error, skip, startTime);
     }
 
     private static int processInput(String input) {
@@ -62,13 +79,25 @@ public class SudokuTestDataRunner {
         }
 
         String[] split = input.split(",");
-        if (split.length != 2) {
-            System.out.println("Skipping: " + input);
-            return 0;
-        }
 
-        String puzzle = split[0];
-        String solution = split[1];
+        if (split.length == 2) {
+            return processPuzzleWithSolution(split[0], split[1]);
+        } else {
+
+            if (split.length == 1) {
+                return processPuzzle(split[0]);
+            } else {
+                System.out.println("Skipping: " + input);
+                return 0;
+            }
+        }
+    }
+
+    /*
+     * these are the puzzles download from https://www.kaggle.com/bryanpark/sudoku
+     */
+    private static int processPuzzleWithSolution(String puzzle, String solution) {
+
         String result = solver.solve(puzzle);
 
         if (solution.equals(result)) {
@@ -83,11 +112,31 @@ public class SudokuTestDataRunner {
         }
     }
 
-    private static void showCounts(int total, int pass, int fail, int skip, long startTime) {
+    /*
+     * these are the puzzles produced by the twenty lemon generator
+     */
+    private static int processPuzzle(String puzzle) {
+
+        String result = solver.solve(puzzle);
+
+        if (result.contains("0")) {
+            System.out.println("\n* incomplete *");
+            System.out.println(puzzle);
+            System.out.println(result);
+            System.out.println();
+            return -1;
+        } else {
+            return 1;
+        }
+    }
+
+
+    private static void showCounts(int total, int pass, int fail, int error, int skip, long startTime) {
 
         System.out.println("Total: " + total
                 + "  Pass: " + pass
                 + "  Fail: " + fail
+                + "  Error: " + error
                 + "  Skip: " + skip
                 + "  Time: " + (System.currentTimeMillis() - startTime) / 1000);
     }
