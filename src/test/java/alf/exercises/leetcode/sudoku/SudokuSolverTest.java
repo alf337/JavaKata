@@ -191,6 +191,12 @@ public class SudokuSolverTest {
     }
 
     @Test
+    public void whyError() {
+
+        assertTrue(isComplete(solver.solve("705000030600104005091387004100000502320005000970200080010803400560472810487001320")));
+    }
+
+    @Test
     public void testGetHiddenPairs() {
         List<Cell> cellList = new ArrayList<>();
         cellList.add(Cell.of(1, 1, '4'));

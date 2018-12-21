@@ -25,16 +25,16 @@ public class SudokuTestDataRunner {
 //            reader = openFile("/home/alan/Downloads/sudoku_test_small.csv");
 
 //            reader = openFile("/home/alan/IdeaProjects/sudoku-generator/SudokuGenerator/dist/1545401541815.sudoku.data.txt");
-//            reader = openFile("/home/alan/IdeaProjects/sudoku-generator/SudokuGenerator/dist/1545401712949.sudoku.data.txt");
+            reader = openFile("/home/alan/IdeaProjects/sudoku-generator/SudokuGenerator/dist/1545401712949.sudoku.data.txt");
 //            reader = openFile("/home/alan/IdeaProjects/sudoku-generator/SudokuGenerator/dist/1545401725108.sudoku.data.txt");
 
 //            reader = openFile("/home/alan/IdeaProjects/sudoku-generator/SudokuGenerator/dist/1545403922433.sudoku.data.txt");
 //            reader = openFile("/home/alan/IdeaProjects/sudoku-generator/SudokuGenerator/dist/1545403936689.sudoku.data.txt");
-            reader = openFile("/home/alan/IdeaProjects/sudoku-generator/SudokuGenerator/dist/1545403946913.sudoku.data.txt");
+//            reader = openFile("/home/alan/IdeaProjects/sudoku-generator/SudokuGenerator/dist/1545403946913.sudoku.data.txt");
 
             Optional<String> input = readLine(reader);
 
-            while (input.isPresent() && total < 2_000_000) {
+            while (input.isPresent() && total < 10) {
                 total++;
 
                 try {
