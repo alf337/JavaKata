@@ -22,7 +22,7 @@ public class SudokuSolver {
 
         Board board = Board.of(boardString);
         board.isValid();
-//        board.print("");
+        board.print("");
 
         Board result = solve(board);
         return result.asString();
@@ -46,7 +46,7 @@ public class SudokuSolver {
             }
         }
 
-//        if (!board.isComplete()) board.printMaybeByValue();
+        if (!board.isComplete()) board.printMaybeByValue();
         return board;
     }
 
@@ -129,6 +129,7 @@ public class SudokuSolver {
     }
 
     private void processAllMaybe(Board board) {
+//        board.print("starting process all maybe");
         int numberOfChanges;
         do {
             numberOfChanges = processSingletons(board);
@@ -216,6 +217,7 @@ public class SudokuSolver {
                     if (other.maybe.size() > 1) {
                         other.maybe.remove(maybeVal);
                     } else {
+                        board.print("Error");
                         throw new RuntimeException("Removing last maybe from neighbor: " + other + " at: " + cell);
                     }
                 }
@@ -227,6 +229,7 @@ public class SudokuSolver {
                     if (other.maybe.size() > 1) {
                         other.maybe.remove(maybeVal);
                     } else {
+                        board.print("Error");
                         throw new RuntimeException("Removing last maybe from neighbor: " + other + " at: " + cell);
                     }
                 }
@@ -238,6 +241,7 @@ public class SudokuSolver {
                     if (other.maybe.size() > 1) {
                         other.maybe.remove(maybeVal);
                     } else {
+                        board.print("Error");
                         throw new RuntimeException("Removing last maybe from neighbor: " + other + " at: " + cell);
                     }
                 }
